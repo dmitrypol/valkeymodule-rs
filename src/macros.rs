@@ -95,6 +95,7 @@ macro_rules! redis_event_handler {
 /// It registers the defined module, sets it up and initialises properly,
 /// registers all the commands and types.
 #[macro_export]
+// extend macro to support creating filters
 macro_rules! valkey_module {
     (
         name: $module_name:expr,
