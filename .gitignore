@@ -21,3 +21,4 @@ src/redisraw/bindings.rs
 venv/
 tmp/*
 shutdown_log.txt
+.DS_Store
