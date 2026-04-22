@@ -27,7 +27,7 @@ fn test_helper_err(_ctx: &Context, args: Vec<ValkeyString>) -> ValkeyResult {
 
     let msg = args.get(1).unwrap();
 
-    Err(ValkeyError::Str(msg.try_as_str().unwrap()))
+    Err(ValkeyError::String(msg.try_as_str().unwrap().to_owned()))
 }
 
 fn add_info_impl(ctx: &InfoContext, _for_crash_report: bool) -> ValkeyResult<()> {
@@ -57,4 +57,21 @@ valkey_module! {
         ["test_helper.name", test_helper_command_name, "", 0, 0, 0],
         ["test_helper.err", test_helper_err, "", 0, 0, 0],
     ],
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_helper_err_returns_input_message() {
+        let args = vec![
+            ValkeyString::create(None, "test_helper.err"),
+            ValkeyString::create(None, "boom"),
+        ];
+
+        let err = test_helper_err(&Context::dummy(), args).unwrap_err();
+
+        assert!(matches!(err, ValkeyError::String(ref msg) if msg == "boom"));
+    }
 }

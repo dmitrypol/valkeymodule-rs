@@ -37,7 +37,10 @@ fn help_subcmd() -> ValkeyResult {
 
 // custom info subcommand, can be called with `cmd1 info`
 fn info_subcmd(args: Vec<ValkeyString>) -> ValkeyResult {
-    let section = args.into_iter().next_str().unwrap_or("all");
+    let section = args
+        .into_iter()
+        .next_string()
+        .unwrap_or_else(|_| "all".to_owned());
 
     let sections = [
         ("key", ValkeyValue::SimpleString("value".into())),
@@ -116,4 +119,61 @@ valkey_module! {
     commands: [
         ["cmd1", cmd1, "", 0, 0, 0],
     ],
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn test_args(args: &[&str]) -> Vec<ValkeyString> {
+        args.iter()
+            .map(|arg| ValkeyString::create(None, *arg))
+            .collect()
+    }
+
+    #[test]
+    fn cmd1_without_subcommand_returns_help() {
+        let result = cmd1(&Context::dummy(), test_args(&["cmd1"])).unwrap();
+
+        match result {
+            ValkeyValue::Array(items) => {
+                assert_eq!(items.len(), 5);
+                assert_eq!(
+                    items[0],
+                    ValkeyValue::SimpleString("cmd1 - top level command".into())
+                );
+            }
+            other => panic!("expected help array, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn cmd1_dispatches_to_nested_subcommand() {
+        let result = cmd1(&Context::dummy(), test_args(&["cmd1", "s1", "s1", "s1"])).unwrap();
+
+        assert_eq!(result, ValkeyValue::BulkString("sub111".into()));
+    }
+
+    #[test]
+    fn cmd1_info_filters_requested_section() {
+        let result = cmd1(&Context::dummy(), test_args(&["cmd1", "info", "bool"])).unwrap();
+
+        match result {
+            ValkeyValue::OrderedMap(map) => {
+                assert_eq!(map.len(), 1);
+                assert_eq!(
+                    map.get(&ValkeyValueKey::from("bool")),
+                    Some(&ValkeyValue::Bool(true))
+                );
+            }
+            other => panic!("expected ordered map, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn cmd1_rejects_invalid_subcommand() {
+        let err = cmd1(&Context::dummy(), test_args(&["cmd1", "invalid"])).unwrap_err();
+
+        assert!(matches!(err, ValkeyError::Str("invalid subcommand")));
+    }
 }
