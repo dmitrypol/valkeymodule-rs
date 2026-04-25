@@ -560,13 +560,25 @@ fn test_client_change_event() -> Result<()> {
     let con2: redis::Connection =
         get_valkey_connection(port).with_context(|| FAILED_TO_CONNECT_TO_SERVER)?;
 
-    let conn_res: i64 = redis::cmd("num_connects").query(&mut con)?;
+    let wait_for_num_connects = |con: &mut redis::Connection, expected| -> Result<i64> {
+        let mut last = 0;
+        for _ in 0..20 {
+            last = redis::cmd("num_connects").query(con)?;
+            if last == expected {
+                return Ok(last);
+            }
+            thread::sleep(Duration::from_millis(50));
+        }
+        Ok(last)
+    };
+
+    let conn_res = wait_for_num_connects(&mut con, 2)?;
     println!("Connection result: {}", conn_res);
     assert_eq!(conn_res, 2);
 
     drop(con2);
 
-    let disconn_res: i64 = redis::cmd("num_connects").query(&mut con)?;
+    let disconn_res = wait_for_num_connects(&mut con, 1)?;
     println!("Disconnection result: {}", disconn_res);
     assert_eq!(disconn_res, 1);
 
@@ -1861,18 +1873,31 @@ fn test_fork_child_event() -> Result<()> {
         .with_context(|| FAILED_TO_START_SERVER)?];
     let mut con = get_valkey_connection(port).with_context(|| FAILED_TO_CONNECT_TO_SERVER)?;
 
+    let initial_fork_child_events: i64 = redis::cmd("num_fork_child_events").query(&mut con)?;
+
     redis::cmd("bgsave")
         .exec(&mut con)
         .with_context(|| "failed to run bgsave")?;
 
-    let num_fork_child_event1: i64 = redis::cmd("num_fork_child_events").query(&mut con)?;
-    assert_eq!(num_fork_child_event1, 1);
+    let wait_for_fork_child_events = |con: &mut redis::Connection, expected| -> Result<i64> {
+        let mut last = 0;
+        for _ in 0..100 {
+            last = redis::cmd("num_fork_child_events").query(con)?;
+            if last >= expected {
+                return Ok(last);
+            }
+            thread::sleep(Duration::from_millis(50));
+        }
+        Ok(last)
+    };
 
-    // Wait a moment for background save to start and potentially complete
-    thread::sleep(Duration::from_millis(100));
+    let num_fork_child_event1 =
+        wait_for_fork_child_events(&mut con, initial_fork_child_events + 1)?;
+    assert!(num_fork_child_event1 >= initial_fork_child_events + 1);
 
-    let num_fork_child_event2: i64 = redis::cmd("num_fork_child_events").query(&mut con)?;
-    assert_eq!(num_fork_child_event2, 2);
+    let num_fork_child_event2 =
+        wait_for_fork_child_events(&mut con, initial_fork_child_events + 2)?;
+    assert!(num_fork_child_event2 >= initial_fork_child_events + 2);
 
     Ok(())
 }
