@@ -36,6 +36,8 @@ pub mod filter;
 pub mod info;
 pub mod keys_cursor;
 pub mod server_events;
+#[cfg(any(test, feature = "test-mocks"))]
+mod test;
 pub mod thread_safe;
 
 pub struct CallOptionsBuilder {

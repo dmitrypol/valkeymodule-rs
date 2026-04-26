@@ -125,3 +125,22 @@ valkey_module! {
         ["client.config_get", config_get, "", 0, 0, 0]
     ]
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_client_id() {
+        let ctx = Context::test();
+        let test = get_client_id(&ctx, vec![]).unwrap();
+        assert_eq!(test, ValkeyValue::Integer(1));
+    }
+
+    #[test]
+    fn test_get_client_name() {
+        let ctx = Context::test();
+        let test = get_client_name(&ctx, vec![]).unwrap();
+        assert_eq!(test, ValkeyValue::BulkString("test-client".to_string()));
+    }
+}
