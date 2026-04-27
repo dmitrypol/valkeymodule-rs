@@ -5,6 +5,7 @@ use valkey_module::{
 
 fn get_client_id(ctx: &Context, _args: Vec<ValkeyString>) -> ValkeyResult {
     let client_id = ctx.get_client_id();
+    ctx.log_notice(&format!("{}", client_id));
     Ok((client_id as i64).into())
 }
 
@@ -124,4 +125,16 @@ valkey_module! {
         ["client.deauth", deauth_client_by_id, "", 0, 0, 0],
         ["client.config_get", config_get, "", 0, 0, 0]
     ]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_client_id() {
+        let ctx = Context::test();
+        let test = get_client_id(&ctx, vec![]).unwrap();
+        assert_eq!(test, ValkeyValue::Integer(1))
+    }
 }
