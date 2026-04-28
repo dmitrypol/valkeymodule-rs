@@ -18,6 +18,13 @@ fn setup_test_shims() {
         let get_client_id = raw::RedisModule_GetClientId;
         if get_client_id.is_none() {
             raw::RedisModule_GetClientId = Some(test_get_client_id);
+            raw::RedisModule_GetClientNameById = Some(test_get_client_name_by_id);
+            raw::RedisModule_GetClientUserNameById = Some(test_get_client_username_by_id);
+            raw::RedisModule_GetClientCertificate = Some(test_get_client_certificate);
+            raw::RedisModule_GetClientInfoById = Some(test_get_client_info_by_id);
+            raw::RedisModule_SetClientNameById = Some(test_set_client_name_by_id);
+            raw::RedisModule_DeauthenticateAndCloseClient =
+                Some(test_deauthenticate_and_close_client);
             raw::RedisModule_CreateString = Some(test_create_string);
             raw::RedisModule_CreateStringFromString = Some(test_create_string_from_string);
             raw::RedisModule_FreeString = Some(test_free_string);

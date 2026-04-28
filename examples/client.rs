@@ -5,7 +5,6 @@ use valkey_module::{
 
 fn get_client_id(ctx: &Context, _args: Vec<ValkeyString>) -> ValkeyResult {
     let client_id = ctx.get_client_id();
-    ctx.log_notice(&format!("{}", client_id));
     Ok((client_id as i64).into())
 }
 
@@ -136,5 +135,74 @@ mod tests {
         let ctx = Context::test();
         let test = get_client_id(&ctx, vec![]).unwrap();
         assert_eq!(test, ValkeyValue::Integer(1))
+    }
+
+    #[test]
+    fn test_get_client_name() {
+        let ctx = Context::test();
+        let test = get_client_name(&ctx, vec![]).unwrap();
+        assert_eq!(
+            test,
+            ValkeyValue::BulkString("test-client-name".to_string())
+        )
+    }
+
+    #[test]
+    fn test_get_client_username() {
+        let ctx = Context::test();
+        let test = get_client_username(&ctx, vec![]).unwrap();
+        assert_eq!(
+            test,
+            ValkeyValue::BulkString("test-client-username".to_string())
+        )
+    }
+
+    #[test]
+    fn test_set_client_name() {
+        let ctx = Context::test();
+        let args = vec![
+            ctx.create_string("client.set_name"),
+            ctx.create_string("new-client-name"),
+        ];
+        let test = set_client_name(&ctx, args).unwrap();
+        assert_eq!(test, ValkeyValue::Integer(Status::Ok as i64))
+    }
+
+    #[test]
+    fn test_get_client_cert() {
+        let ctx = Context::test();
+        let test = get_client_cert(&ctx, vec![]).unwrap();
+        assert_eq!(test, ValkeyValue::BulkString("".to_string()))
+    }
+
+    #[test]
+    fn test_get_client_info() {
+        let ctx = Context::test();
+        let test = get_client_info(&ctx, vec![]).unwrap();
+        assert_eq!(test, ValkeyValue::BulkString("1".to_string()))
+    }
+
+    #[test]
+    fn test_get_client_ip() {
+        let ctx = Context::test();
+        let test = get_client_ip(&ctx, vec![]).unwrap();
+        assert_eq!(test, ValkeyValue::BulkString("127.0.0.1".to_string()))
+    }
+
+    #[test]
+    fn test_deauth_client_by_id() {
+        let ctx = Context::test();
+        let ok_args = vec![ctx.create_string("client.deauth"), ctx.create_string("1")];
+        let test = deauth_client_by_id(&ctx, ok_args).unwrap();
+        assert_eq!(test, ValkeyValue::BulkString("OK".to_string()));
+
+        let err_args = vec![ctx.create_string("client.deauth"), ctx.create_string("0")];
+        let err = deauth_client_by_id(&ctx, err_args).unwrap_err();
+        match err {
+            ValkeyError::Str(message) => {
+                assert_eq!(message, "Failed to deauthenticate and close client")
+            }
+            other => panic!("unexpected error: {other:?}"),
+        }
     }
 }
