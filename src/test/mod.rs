@@ -2,8 +2,11 @@
 //! inside a Valkey server.
 
 mod context;
+mod valkey_string;
 
 use crate::raw;
+use crate::test::context::*;
+use crate::test::valkey_string::*;
 use std::sync::Once;
 
 static INIT: Once = Once::new();
@@ -14,7 +17,15 @@ fn setup_test_shims() {
     INIT.call_once(|| unsafe {
         let get_client_id = raw::RedisModule_GetClientId;
         if get_client_id.is_none() {
-            raw::RedisModule_GetClientId = Some(context::test_get_client_id);
+            raw::RedisModule_GetClientId = Some(test_get_client_id);
+            raw::RedisModule_CreateString = Some(test_create_string);
+            raw::RedisModule_CreateStringFromString = Some(test_create_string_from_string);
+            raw::RedisModule_FreeString = Some(test_free_string);
+            raw::RedisModule_StringPtrLen = Some(test_string_ptr_len);
+            raw::RedisModule_RetainString = Some(test_retain_string);
+            raw::RedisModule_StringAppendBuffer = Some(test_string_append_buffer);
+            raw::RedisModule_StringCompare = Some(test_string_compare);
+            raw::RedisModule_StringToLongLong = Some(test_string_to_longlong);
         }
     })
 }
