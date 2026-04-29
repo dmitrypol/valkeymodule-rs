@@ -559,6 +559,7 @@ fn test_client_change_event() -> Result<()> {
     let mut con = get_valkey_connection(port).with_context(|| FAILED_TO_CONNECT_TO_SERVER)?;
     let con2: redis::Connection =
         get_valkey_connection(port).with_context(|| FAILED_TO_CONNECT_TO_SERVER)?;
+    thread::sleep(Duration::from_millis(500));
 
     let conn_res: i64 = redis::cmd("num_connects").query(&mut con)?;
     println!("Connection result: {}", conn_res);

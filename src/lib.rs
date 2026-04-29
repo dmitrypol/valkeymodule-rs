@@ -11,6 +11,7 @@ pub mod native_types;
 pub mod raw;
 pub mod rediserror;
 mod redismodule;
+mod redismodule_mock;
 pub mod redisraw;
 pub mod redisvalue;
 pub mod stream;
@@ -54,6 +55,7 @@ pub use crate::context::{
 };
 pub use crate::raw::*;
 pub use crate::redismodule::*;
+pub use crate::redismodule_mock::*;
 use backtrace::Backtrace;
 use context::server_events::INFO_COMMAND_HANDLER_LIST;
 
