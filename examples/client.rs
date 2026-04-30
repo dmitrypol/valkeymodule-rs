@@ -129,17 +129,19 @@ valkey_module! {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
 
     #[test]
     fn test_get_client_id() {
-        let ctx = Context::test();
+        let data = HashMap::from([("client_id".to_string(), "10".to_string())]);
+        let ctx = Context::test(Some(data));
         let test = get_client_id(&ctx, vec![]).unwrap();
-        assert_eq!(test, ValkeyValue::Integer(1))
+        assert_eq!(test, ValkeyValue::Integer(10))
     }
 
     #[test]
     fn test_get_client_name() {
-        let ctx = Context::test();
+        let ctx = Context::test(None);
         let test = get_client_name(&ctx, vec![]).unwrap();
         assert_eq!(
             test,
@@ -149,7 +151,7 @@ mod tests {
 
     #[test]
     fn test_get_client_username() {
-        let ctx = Context::test();
+        let ctx = Context::test(None);
         let test = get_client_username(&ctx, vec![]).unwrap();
         assert_eq!(
             test,
@@ -159,7 +161,7 @@ mod tests {
 
     #[test]
     fn test_set_client_name() {
-        let ctx = Context::test();
+        let ctx = Context::test(None);
         let args = vec![
             ctx.create_string("client.set_name"),
             ctx.create_string("new-client-name"),
@@ -170,29 +172,30 @@ mod tests {
 
     #[test]
     fn test_get_client_cert() {
-        let ctx = Context::test();
+        let ctx = Context::test(None);
         let test = get_client_cert(&ctx, vec![]).unwrap();
         assert_eq!(test, ValkeyValue::BulkString("".to_string()))
     }
 
     #[test]
     fn test_get_client_info() {
-        let ctx = Context::test();
+        let ctx = Context::test(None);
         let test = get_client_info(&ctx, vec![]).unwrap();
         assert_eq!(test, ValkeyValue::BulkString("1".to_string()))
     }
 
     #[test]
     fn test_get_client_ip() {
-        let ctx = Context::test();
+        let ctx = Context::test(None);
         let test = get_client_ip(&ctx, vec![]).unwrap();
         assert_eq!(test, ValkeyValue::BulkString("127.0.0.1".to_string()))
     }
 
     #[test]
     fn test_deauth_client_by_id() {
-        let ctx = Context::test();
-        let ok_args = vec![ctx.create_string("client.deauth"), ctx.create_string("1")];
+        let data = HashMap::from([("client_id".to_string(), "10".to_string())]);
+        let ctx = Context::test(Some(data));
+        let ok_args = vec![ctx.create_string("client.deauth"), ctx.create_string("10")];
         let test = deauth_client_by_id(&ctx, ok_args).unwrap();
         assert_eq!(test, ValkeyValue::BulkString("OK".to_string()));
 

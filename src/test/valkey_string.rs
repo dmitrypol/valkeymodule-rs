@@ -203,7 +203,7 @@ mod tests {
 
     #[test]
     fn create_string_supports_context_helper() {
-        let ctx = Context::test();
+        let ctx = Context::test(None);
 
         let value = ctx.create_string("hello");
 

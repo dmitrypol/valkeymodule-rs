@@ -38,7 +38,7 @@ mod tests {
 
     #[test]
     fn test_hello_mul() {
-        let ctx = Context::test();
+        let ctx = Context::test(None);
         let args = vec![
             ctx.create_string("hello.mul"),
             ctx.create_string("2"),
@@ -61,7 +61,7 @@ mod tests {
 
     #[test]
     fn test_hello_mul_wrong_arity() {
-        let ctx = Context::test();
+        let ctx = Context::test(None);
         let args = vec![ctx.create_string("hello.mul")];
 
         let err = hello_mul(&ctx, args).expect_err("hello.mul should reject missing operands");
@@ -71,7 +71,7 @@ mod tests {
 
     #[test]
     fn test_hello_mul_rejects_non_integer_input() {
-        let ctx = Context::test();
+        let ctx = Context::test(None);
         let args = vec![
             ctx.create_string("hello.mul"),
             ctx.create_string("not-a-number"),
