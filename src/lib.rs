@@ -20,6 +20,8 @@ mod context;
 pub mod key;
 pub mod logging;
 mod macros;
+#[cfg(any(test, feature = "unit-test-shims"))]
+mod test;
 mod utils;
 
 pub use crate::context::blocked::BlockedClient;
@@ -54,6 +56,8 @@ pub use crate::context::{
 };
 pub use crate::raw::*;
 pub use crate::redismodule::*;
+#[cfg(any(test, feature = "unit-test-shims"))]
+pub use crate::test::TestContext;
 use backtrace::Backtrace;
 use context::server_events::INFO_COMMAND_HANDLER_LIST;
 
