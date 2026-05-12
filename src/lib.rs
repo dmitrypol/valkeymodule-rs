@@ -57,7 +57,7 @@ pub use crate::context::{
 pub use crate::raw::*;
 pub use crate::redismodule::*;
 #[cfg(any(test, feature = "unit-test-shims"))]
-pub use crate::test::TestContext;
+pub use crate::test::{TestContext, TestValkeyString};
 use backtrace::Backtrace;
 use context::server_events::INFO_COMMAND_HANDLER_LIST;
 
