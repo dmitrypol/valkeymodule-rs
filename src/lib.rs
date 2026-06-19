@@ -20,6 +20,8 @@ mod context;
 pub mod key;
 pub mod logging;
 mod macros;
+#[cfg(any(test, feature = "test-utils"))]
+mod test;
 mod utils;
 
 pub use crate::context::blocked::BlockedClient;

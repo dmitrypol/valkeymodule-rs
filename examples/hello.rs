@@ -30,3 +30,39 @@ valkey_module! {
         ["hello.mul", hello_mul, "", 0, 0, 0],
     ],
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::hello_mul;
+    use valkey_module::{Context, ValkeyError, ValkeyString, ValkeyValue};
+
+    #[test]
+    fn test_empty_args() {
+        let test = hello_mul(&Context::dummy(), vec![]);
+        assert!(matches!(test, Err(ValkeyError::WrongArity)))
+    }
+
+    #[test]
+    fn test_cmd_name_only() {
+        let cmd = ValkeyString::test("hello.mul");
+        let test = hello_mul(&Context::dummy(), vec![cmd]);
+        assert!(matches!(test, Err(ValkeyError::WrongArity)))
+    }
+
+    #[test]
+    fn test_hello_mul() {
+        let cmd = ValkeyString::test("hello.mul");
+        let arg1 = ValkeyString::test("3");
+        let arg2 = ValkeyString::test("4");
+        let test = hello_mul(&Context::dummy(), vec![cmd, arg1, arg2]);
+        assert!(matches!(
+            test,
+            Ok(ValkeyValue::Array(values))
+                if values == vec![
+                    ValkeyValue::Integer(3),
+                    ValkeyValue::Integer(4),
+                    ValkeyValue::Integer(12),
+                ]
+        ))
+    }
+}
