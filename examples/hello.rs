@@ -34,10 +34,12 @@ valkey_module! {
 #[cfg(test)]
 mod tests {
     use crate::hello_mul;
+    use std::collections::HashMap;
     use valkey_module::{Context, ValkeyError, ValkeyString, ValkeyValue};
 
     #[test]
     fn test_empty_args() {
+        // using dummy context as it's not actually used in the command
         let test = hello_mul(&Context::dummy(), vec![]);
         assert!(matches!(test, Err(ValkeyError::WrongArity)))
     }
@@ -51,10 +53,12 @@ mod tests {
 
     #[test]
     fn test_hello_mul() {
+        // using test context even though it's not necessary
+        let ctx = Context::test(HashMap::new());
         let cmd = ValkeyString::test("hello.mul");
         let arg1 = ValkeyString::test("3");
         let arg2 = ValkeyString::test("4");
-        let test = hello_mul(&Context::dummy(), vec![cmd, arg1, arg2]);
+        let test = hello_mul(&ctx, vec![cmd, arg1, arg2]);
         assert!(matches!(
             test,
             Ok(ValkeyValue::Array(values))
