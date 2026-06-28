@@ -1,4 +1,5 @@
-use crate::{raw, Context};
+use crate::{raw, Context, ValkeyString};
+use libc::c_char;
 use std::collections::HashMap;
 use std::ptr::null_mut;
 
@@ -88,5 +89,29 @@ pub(super) extern "C" fn test_deauthenticate_and_close_client(
         raw::Status::Ok as libc::c_int
     } else {
         raw::Status::Err as libc::c_int
+    }
+}
+
+pub(super) extern "C" fn test_create_string(
+    _ctx: *mut raw::RedisModuleCtx,
+    ptr: *const c_char,
+    len: usize,
+) -> *mut raw::RedisModuleString {
+    // RedisModule_CreateString receives a C pointer plus explicit byte length;
+    // rebuild the borrowed byte slice before copying it into the test string.
+    let bytes = unsafe { std::slice::from_raw_parts(ptr.cast::<u8>(), len) };
+    ValkeyString::test(bytes.to_vec()).take()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_context_create_string() {
+        let ctx = Context::test(HashMap::new());
+        let string = ctx.create_string("test-context-string");
+
+        assert_eq!(string.to_string(), "test-context-string");
     }
 }

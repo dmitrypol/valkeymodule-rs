@@ -14,6 +14,7 @@ fn setup_test_shims() {
         raw::RedisModule_GetClientCertificate = Some(context::test_get_client_certificate);
         raw::RedisModule_DeauthenticateAndCloseClient =
             Some(context::test_deauthenticate_and_close_client);
+        raw::RedisModule_CreateString = Some(context::test_create_string);
         raw::RedisModule_StringPtrLen = Some(valkey_string::test_string_ptr_len);
         raw::RedisModule_FreeString = Some(valkey_string::test_free_string);
         raw::RedisModule_RetainString = Some(valkey_string::test_retain_string);
