@@ -109,6 +109,12 @@ pub(super) extern "C" fn test_create_string(
     ValkeyString::test(bytes.to_vec()).take()
 }
 
+pub(super) extern "C" fn test_set_module_options(
+    _ctx: *mut raw::RedisModuleCtx,
+    _options: libc::c_int,
+) {
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -125,5 +131,19 @@ mod tests {
     fn test_context_get_current_user() {
         let ctx = Context::test(HashMap::from([("current_user".into(), "test-user".into())]));
         assert_eq!(ctx.get_current_user().to_string(), "test-user");
+    }
+
+    #[test]
+    fn test_context_set_module_options() {
+        let ctx = Context::test(HashMap::new());
+
+        for options in [
+            raw::ModuleOptions::HANDLE_IO_ERRORS,
+            raw::ModuleOptions::NO_IMPLICIT_SIGNAL_MODIFIED,
+            raw::ModuleOptions::HANDLE_REPL_ASYNC_LOAD,
+            raw::ModuleOptions::ALLOW_NESTED_KEYSPACE_NOTIFICATIONS,
+        ] {
+            ctx.set_module_options(options);
+        }
     }
 }

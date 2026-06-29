@@ -341,3 +341,15 @@ valkey_module! {
         ["num_event_loop_after_sleep", num_event_loop_after_sleep, "readonly", 0, 0, 0],
     ]
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    #[test]
+    fn test_init() {
+        let ctx = Context::test(HashMap::new());
+        assert_eq!(init(&ctx, &[]), Status::Ok);
+    }
+}

@@ -18,6 +18,7 @@ fn setup_test_shims() {
             Some(context::test_deauthenticate_and_close_client);
         raw::RedisModule_GetCurrentUserName = Some(context::test_get_current_user_name);
         raw::RedisModule_CreateString = Some(context::test_create_string);
+        raw::RedisModule_SetModuleOptions = Some(context::test_set_module_options);
         // cmd_filter_ctx
         raw::RedisModule_CommandFilterArgsCount =
             Some(cmd_filter_ctx::test_command_filter_args_count);
