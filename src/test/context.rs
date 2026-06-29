@@ -1,5 +1,5 @@
 use crate::{raw, Context, ValkeyString};
-use libc::c_char;
+use libc::{c_char, c_void};
 use std::collections::HashMap;
 use std::ptr::null_mut;
 
@@ -115,6 +115,35 @@ pub(super) extern "C" fn test_set_module_options(
 ) {
 }
 
+pub(super) extern "C" fn test_authenticate_client_with_acl_user(
+    ctx: *mut raw::RedisModuleCtx,
+    name: *const c_char,
+    len: usize,
+    _callback: raw::RedisModuleUserChangedFunc,
+    _privdata: *mut c_void,
+    client_id: *mut u64,
+) -> libc::c_int {
+    let data = test_context_data(ctx);
+    let name = unsafe { std::slice::from_raw_parts(name.cast::<u8>(), len) };
+    let Ok(name) = std::str::from_utf8(name) else {
+        return raw::Status::Err as libc::c_int;
+    };
+
+    if data
+        .get("acl_user")
+        .is_some_and(|acl_user| acl_user == name)
+    {
+        if !client_id.is_null() {
+            unsafe {
+                *client_id = test_get_client_id(ctx);
+            }
+        }
+        raw::Status::Ok as libc::c_int
+    } else {
+        raw::Status::Err as libc::c_int
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -145,5 +174,27 @@ mod tests {
         ] {
             ctx.set_module_options(options);
         }
+    }
+
+    #[test]
+    fn test_context_authenticate_client_with_acl_user() {
+        let ctx = Context::test(HashMap::from([("acl_user".into(), "test-user".into())]));
+        let username = ValkeyString::test("test-user");
+
+        assert_eq!(
+            ctx.authenticate_client_with_acl_user(&username),
+            raw::Status::Ok
+        );
+    }
+
+    #[test]
+    fn test_context_authenticate_client_with_acl_user_missing_user() {
+        let ctx = Context::test(HashMap::from([("acl_user".into(), "test-user".into())]));
+        let username = ValkeyString::test("other-user");
+
+        assert_eq!(
+            ctx.authenticate_client_with_acl_user(&username),
+            raw::Status::Err
+        );
     }
 }

@@ -19,6 +19,8 @@ fn setup_test_shims() {
         raw::RedisModule_GetCurrentUserName = Some(context::test_get_current_user_name);
         raw::RedisModule_CreateString = Some(context::test_create_string);
         raw::RedisModule_SetModuleOptions = Some(context::test_set_module_options);
+        raw::RedisModule_AuthenticateClientWithACLUser =
+            Some(context::test_authenticate_client_with_acl_user);
         // cmd_filter_ctx
         raw::RedisModule_CommandFilterArgsCount =
             Some(cmd_filter_ctx::test_command_filter_args_count);

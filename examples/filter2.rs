@@ -85,3 +85,54 @@ valkey_module! {
         [filter2_fn, VALKEYMODULE_CMDFILTER_NOSELF]
     ]
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    #[test]
+    fn test_auth_callback() {
+        CLIENT_ID_USERNAME_MAP.remove(&42);
+        let ctx = Context::test(HashMap::from([
+            ("acl_user".into(), "test-user".into()),
+            ("client_id".into(), "42".into()),
+            ("client_username".into(), "default".into()),
+        ]));
+
+        let result = auth_callback(
+            &ctx,
+            ValkeyString::test("test-user"),
+            ValkeyString::test("password"),
+        )
+        .unwrap();
+
+        assert_eq!(result, AUTH_HANDLED);
+        assert_eq!(
+            CLIENT_ID_USERNAME_MAP
+                .get(&42)
+                .map(|username| username.clone()),
+            Some("test-user".into())
+        );
+    }
+
+    #[test]
+    fn test_auth_callback_not_handled() {
+        CLIENT_ID_USERNAME_MAP.remove(&43);
+        let ctx = Context::test(HashMap::from([
+            ("acl_user".into(), "test-user".into()),
+            ("client_id".into(), "43".into()),
+            ("client_username".into(), "default".into()),
+        ]));
+
+        let result = auth_callback(
+            &ctx,
+            ValkeyString::test("other-user"),
+            ValkeyString::test("password"),
+        )
+        .unwrap();
+
+        assert_eq!(result, AUTH_NOT_HANDLED);
+        assert!(CLIENT_ID_USERNAME_MAP.get(&43).is_none());
+    }
+}
