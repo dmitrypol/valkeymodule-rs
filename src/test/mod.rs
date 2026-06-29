@@ -36,5 +36,7 @@ fn setup_test_shims() {
         raw::RedisModule_FreeString = Some(valkey_string::test_free_string);
         raw::RedisModule_RetainString = Some(valkey_string::test_retain_string);
         raw::RedisModule_StringToLongLong = Some(valkey_string::test_string_to_longlong);
+        raw::RedisModule_StringToULongLong = Some(valkey_string::test_string_to_ulonglong);
+        raw::RedisModule_StringToDouble = Some(valkey_string::test_string_to_double);
     })
 }
