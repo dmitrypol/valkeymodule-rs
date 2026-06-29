@@ -48,3 +48,17 @@ valkey_module! {
         ["existing_categories", existing_categories, "write", 0, 0, 0, "read fast admin"],
     ],
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    #[test]
+    fn test_get_current_user() {
+        let ctx = Context::test(HashMap::from([("current_user".into(), "test-user".into())]));
+        let test = get_current_user(&ctx, vec![]).unwrap();
+
+        assert_eq!(String::try_from(test).unwrap(), "test-user");
+    }
+}

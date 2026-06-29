@@ -92,6 +92,12 @@ pub(super) extern "C" fn test_deauthenticate_and_close_client(
     }
 }
 
+pub(super) extern "C" fn test_get_current_user_name(
+    ctx: *mut raw::RedisModuleCtx,
+) -> *mut raw::RedisModuleString {
+    test_context_string(ctx, "current_user")
+}
+
 pub(super) extern "C" fn test_create_string(
     _ctx: *mut raw::RedisModuleCtx,
     ptr: *const c_char,
@@ -113,5 +119,11 @@ mod tests {
         let string = ctx.create_string("test-context-string");
 
         assert_eq!(string.to_string(), "test-context-string");
+    }
+
+    #[test]
+    fn test_context_get_current_user() {
+        let ctx = Context::test(HashMap::from([("current_user".into(), "test-user".into())]));
+        assert_eq!(ctx.get_current_user().to_string(), "test-user");
     }
 }
