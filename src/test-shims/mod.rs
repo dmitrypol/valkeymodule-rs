@@ -1,9 +1,43 @@
 mod cmd_filter_ctx;
 mod context;
+mod expectation;
 mod valkey_string;
 
+pub use context::TestContext;
+pub(crate) use context::{ffi_catch, resume_pending_panic};
+pub use expectation::{Expectation0, Expectation1, Expectation2};
+
 use crate::raw;
+use std::cell::Cell;
 use std::sync::Once;
+
+thread_local! {
+    static ACTIVE_CONTEXT: Cell<*mut raw::RedisModuleCtx> =
+        const { Cell::new(std::ptr::null_mut()) };
+}
+
+struct ActiveContextGuard {
+    previous: *mut raw::RedisModuleCtx,
+}
+
+impl Drop for ActiveContextGuard {
+    fn drop(&mut self) {
+        ACTIVE_CONTEXT.with(|active| active.set(self.previous));
+    }
+}
+
+pub(crate) fn with_active_context<T>(
+    ctx: *mut raw::RedisModuleCtx,
+    callback: impl FnOnce() -> T,
+) -> T {
+    let previous = ACTIVE_CONTEXT.with(|active| active.replace(ctx));
+    let _guard = ActiveContextGuard { previous };
+    callback()
+}
+
+pub(crate) fn active_context() -> *mut raw::RedisModuleCtx {
+    ACTIVE_CONTEXT.with(Cell::get)
+}
 
 static INIT: Once = Once::new();
 fn setup_test_shims() {

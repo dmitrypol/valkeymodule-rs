@@ -766,6 +766,8 @@ impl Context {
     }
     pub fn set_module_options(&self, options: ModuleOptions) {
         unsafe { raw::RedisModule_SetModuleOptions.unwrap()(self.ctx, options.bits()) };
+        #[cfg(any(test, feature = "test-shims"))]
+        crate::testshims::resume_pending_panic(self.ctx);
     }
 
     /// Return ContextFlags object that allows to check properties related to the state of
@@ -782,6 +784,8 @@ impl Context {
     /// Return the current user name attached to the context
     pub fn get_current_user(&self) -> ValkeyString {
         let user = unsafe { raw::RedisModule_GetCurrentUserName.unwrap()(self.ctx) };
+        #[cfg(any(test, feature = "test-shims"))]
+        crate::testshims::resume_pending_panic(self.ctx);
         ValkeyString::from_redis_module_string(ptr::null_mut(), user)
     }
 

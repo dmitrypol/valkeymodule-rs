@@ -129,28 +129,41 @@ valkey_module! {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashMap;
 
     #[test]
     fn test_get_client_id() {
-        let ctx = Context::test(HashMap::from([("client_id".into(), "42".into())]));
+        let mut ctx = Context::test();
+        ctx.expect_get_client_id().returning(|| 42);
         let test = get_client_id(&ctx, vec![]).unwrap();
         assert_eq!(test, ValkeyValue::Integer(42));
+        ctx.checkpoint();
     }
 
     #[test]
     fn test_get_client_name() {
-        let ctx = Context::test(HashMap::from([
-            ("client_id".into(), "42".into()),
-            ("client_name".into(), "test-client-name".into()),
-        ]));
+        let mut ctx = Context::test();
+        ctx.expect_get_client_name_by_id()
+            .withf(|id| *id == 0)
+            .returning(|_| Err(ValkeyError::Str("missing")));
+        ctx.expect_get_client_id().returning(|| 42);
+        ctx.expect_get_client_name_by_id()
+            .withf(|id| *id == 42)
+            .returning(|_| Ok(ValkeyString::test("test-client-name")));
         let test = get_client_name(&ctx, vec![]).unwrap();
         assert_eq!(test, ValkeyValue::BulkString("test-client-name".into()));
+        ctx.checkpoint();
     }
 
     #[test]
     fn test_set_client_name() {
-        let ctx = Context::test(HashMap::from([("client_id".into(), "42".into())]));
+        let mut ctx = Context::test();
+        ctx.expect_set_client_name_by_id()
+            .withf(|id, name| *id == 0 && name == b"test-client-name")
+            .returning(|_, _| Status::Ok);
+        ctx.expect_get_client_id().returning(|| 42);
+        ctx.expect_set_client_name_by_id()
+            .withf(|id, name| *id == 42 && name == b"test-client-name")
+            .returning(|_, _| Status::Ok);
         let test = set_client_name(
             &ctx,
             vec![
@@ -160,30 +173,41 @@ mod tests {
         )
         .unwrap();
         assert_eq!(test, ValkeyValue::Integer(Status::Ok as i64));
+        ctx.checkpoint();
     }
+
     #[test]
     fn test_get_client_username() {
-        let ctx = Context::test(HashMap::from([
-            ("client_id".into(), "42".into()),
-            ("client_username".into(), "test-client-username".into()),
-        ]));
+        let mut ctx = Context::test();
+        ctx.expect_get_client_username_by_id()
+            .withf(|id| *id == 0)
+            .returning(|_| Err(ValkeyError::Str("missing")));
+        ctx.expect_get_client_id().returning(|| 42);
+        ctx.expect_get_client_username_by_id()
+            .withf(|id| *id == 42)
+            .returning(|_| Ok(ValkeyString::test("test-client-username")));
         let test = get_client_username(&ctx, vec![]).unwrap();
         assert_eq!(test, ValkeyValue::BulkString("test-client-username".into()));
+        ctx.checkpoint();
     }
 
     #[test]
     fn test_get_client_cert() {
-        let ctx = Context::test(HashMap::from([
-            ("client_id".into(), "42".into()),
-            ("client_cert".into(), "test-client-cert".into()),
-        ]));
+        let mut ctx = Context::test();
+        ctx.expect_get_client_id().returning(|| 42);
+        ctx.expect_get_client_cert()
+            .returning(|| Ok(ValkeyString::test("test-client-cert")));
         let test = get_client_cert(&ctx, vec![]).unwrap();
         assert_eq!(test, ValkeyValue::BulkString("".into()));
+        ctx.checkpoint();
     }
 
     #[test]
     fn test_deauth_client_by_id() {
-        let ctx = Context::test(HashMap::from([("client_id".into(), "42".into())]));
+        let mut ctx = Context::test();
+        ctx.expect_deauthenticate_and_close_client_by_id()
+            .withf(|id| *id == 42)
+            .returning(|_| Status::Ok);
         let test = deauth_client_by_id(
             &ctx,
             vec![
@@ -193,15 +217,20 @@ mod tests {
         )
         .unwrap();
         assert_eq!(test, ValkeyValue::BulkString("OK".into()));
+        ctx.checkpoint();
     }
 
     #[test]
     fn test_deauth_client_by_id_missing_client() {
-        let ctx = Context::test(HashMap::from([("client_id".into(), "42".into())]));
+        let mut ctx = Context::test();
+        ctx.expect_deauthenticate_and_close_client_by_id()
+            .withf(|id| *id == 7)
+            .returning(|_| Status::Err);
         let test = deauth_client_by_id(
             &ctx,
             vec![ValkeyString::test("client.deauth"), ValkeyString::test("7")],
         );
         assert!(matches!(test, Err(ValkeyError::Str(_))));
+        ctx.checkpoint();
     }
 }

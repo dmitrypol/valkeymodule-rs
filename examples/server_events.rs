@@ -345,11 +345,14 @@ valkey_module! {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashMap;
 
     #[test]
     fn test_init() {
-        let ctx = Context::test(HashMap::new());
+        let mut ctx = Context::test();
+        ctx.expect_set_module_options()
+            .withf(|options| options.contains(ModuleOptions::HANDLE_REPL_ASYNC_LOAD))
+            .returning(|_| ());
         assert_eq!(init(&ctx, &[]), Status::Ok);
+        ctx.checkpoint();
     }
 }

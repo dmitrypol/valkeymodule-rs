@@ -22,6 +22,8 @@ impl Context {
                 ptr::null_mut(),
             )
         };
+        #[cfg(any(test, feature = "test-shims"))]
+        crate::testshims::resume_pending_panic(self.ctx);
 
         if result == raw::REDISMODULE_OK as c_int {
             raw::Status::Ok
