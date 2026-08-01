@@ -34,6 +34,7 @@ valkey_module! {
 #[cfg(test)]
 mod tests {
     use crate::hello_mul;
+    use std::collections::HashMap;
     use valkey_module::{Context, ValkeyError, ValkeyString, ValkeyValue};
 
     #[test]
@@ -53,7 +54,7 @@ mod tests {
     #[test]
     fn test_hello_mul() {
         // using test context even though it's not necessary
-        let ctx = Context::test();
+        let ctx = Context::test(HashMap::new());
         let cmd = ValkeyString::test("hello.mul");
         let arg1 = ValkeyString::test("3");
         let arg2 = ValkeyString::test("4");

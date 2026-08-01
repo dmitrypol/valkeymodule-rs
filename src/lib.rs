@@ -23,10 +23,6 @@ mod macros;
 #[cfg(any(test, feature = "test-shims"))]
 #[path = "test-shims/mod.rs"]
 mod testshims;
-#[cfg(any(test, feature = "test-shims"))]
-pub mod testing {
-    pub use crate::testshims::{Expectation0, Expectation1, Expectation2, TestContext};
-}
 mod utils;
 
 pub use crate::context::blocked::BlockedClient;

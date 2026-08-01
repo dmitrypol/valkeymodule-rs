@@ -89,18 +89,16 @@ valkey_module! {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
 
     #[test]
     fn test_auth_callback() {
         CLIENT_ID_USERNAME_MAP.remove(&42);
-        let mut ctx = Context::test();
-        ctx.expect_get_client_id().times(2).returning(|| 42);
-        ctx.expect_get_client_username_by_id()
-            .withf(|id| *id == 42)
-            .returning(|_| Ok(ValkeyString::test("default")));
-        ctx.expect_authenticate_client_with_acl_user()
-            .withf(|username| username == b"test-user")
-            .returning(|_| Status::Ok);
+        let ctx = Context::test(HashMap::from([
+            ("acl_user".into(), "test-user".into()),
+            ("client_id".into(), "42".into()),
+            ("client_username".into(), "default".into()),
+        ]));
 
         let result = auth_callback(
             &ctx,
@@ -116,20 +114,16 @@ mod tests {
                 .map(|username| username.clone()),
             Some("test-user".into())
         );
-        ctx.checkpoint();
     }
 
     #[test]
     fn test_auth_callback_not_handled() {
         CLIENT_ID_USERNAME_MAP.remove(&43);
-        let mut ctx = Context::test();
-        ctx.expect_get_client_id().returning(|| 43);
-        ctx.expect_get_client_username_by_id()
-            .withf(|id| *id == 43)
-            .returning(|_| Ok(ValkeyString::test("default")));
-        ctx.expect_authenticate_client_with_acl_user()
-            .withf(|username| username == b"other-user")
-            .returning(|_| Status::Err);
+        let ctx = Context::test(HashMap::from([
+            ("acl_user".into(), "test-user".into()),
+            ("client_id".into(), "43".into()),
+            ("client_username".into(), "default".into()),
+        ]));
 
         let result = auth_callback(
             &ctx,
@@ -140,6 +134,5 @@ mod tests {
 
         assert_eq!(result, AUTH_NOT_HANDLED);
         assert!(CLIENT_ID_USERNAME_MAP.get(&43).is_none());
-        ctx.checkpoint();
     }
 }

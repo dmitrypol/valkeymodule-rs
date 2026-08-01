@@ -47,30 +47,7 @@ For integration tests with `ValkeyAlloc` use this:
 cargo test
 ```
 
-2. Test Shims
-
-The `test-shims` feature lets command handlers run as ordinary Rust unit tests
-without starting Valkey. It automatically enables `enable-system-alloc`.
-
-Create a test context, configure the Valkey API calls the handler should make,
-and verify the expected call counts:
-
-```rust
-let mut ctx = Context::test();
-ctx.expect_get_client_id()
-    .times(1)
-    .returning(|| 42);
-
-let result = command_handler(&ctx, vec![]);
-ctx.checkpoint();
-```
-
-Calls without matching expectations panic. `checkpoint()` verifies configured
-call counts and clears satisfied expectations so the context can be reused.
-`TestContext` is single-threaded and must remain on the thread where it was
-created.
-
-3. Redis Compatibility
+2. Redis Compatibility
 
 This feature flag is useful in case you have a Module that needs to be loaded on both Valkey and Redis Servers. In this case, you can use the `use-redismodule-api` flag so that the Module is loaded using the RedisModule API Initialization for compatibility.
 
