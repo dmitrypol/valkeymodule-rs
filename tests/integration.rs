@@ -182,23 +182,22 @@ fn test_info_handler_multiple_sections() -> Result<()> {
     })
 }
 
-#[allow(unused_must_use)]
 #[test]
 fn test_test_helper_err() -> Result<()> {
     let port: u16 = 6484;
-    let _guards =
-        vec![start_valkey_server_with_module("hello", port)
-            .with_context(|| FAILED_TO_START_SERVER)?];
+    let _guards = vec![start_valkey_server_with_module("test_helper", port)
+        .with_context(|| FAILED_TO_START_SERVER)?];
     let mut con = get_valkey_connection(port).with_context(|| FAILED_TO_CONNECT_TO_SERVER)?;
 
-    // Make sure embedded nulls do not cause a crash
-    redis::cmd("test_helper.err")
-        .arg(&["\x00\x00"])
-        .query::<()>(&mut con);
+    // Make sure embedded nulls do not cause a crash and are returned as errors.
+    for message in ["\x00\x00", "no crash\x00"] {
+        let error = redis::cmd("test_helper.err")
+            .arg(message)
+            .query::<()>(&mut con)
+            .expect_err("test_helper.err should return an error");
 
-    redis::cmd("test_helper.err")
-        .arg(&["no crash\x00"])
-        .query::<()>(&mut con);
+        assert_eq!(error.kind(), redis::ErrorKind::ExtensionError);
+    }
 
     Ok(())
 }
