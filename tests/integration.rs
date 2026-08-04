@@ -17,6 +17,7 @@ const FAILED_TO_CONNECT_TO_SERVER: &str = "failed to connect to valkey server";
 const EVENT_WAIT_TIMEOUT: Duration = Duration::from_secs(10);
 const EVENT_POLL_INTERVAL: Duration = Duration::from_millis(50);
 
+mod modules;
 mod utils;
 
 #[test]
@@ -62,102 +63,6 @@ fn test_keys_pos() -> Result<()> {
     }
 
     Ok(())
-}
-
-#[test]
-fn test_helper_version() -> Result<()> {
-    let port: u16 = 6481;
-    let _guards = vec![start_valkey_server_with_module("test_helper", port)
-        .with_context(|| FAILED_TO_START_SERVER)?];
-    let mut con = get_valkey_connection(port).with_context(|| FAILED_TO_CONNECT_TO_SERVER)?;
-
-    let res: Vec<i64> = redis::cmd("test_helper.version")
-        .query(&mut con)
-        .with_context(|| "failed to run test_helper.version")?;
-    assert!(res[0] > 0);
-
-    // Test also an internal implementation that might not always be reached
-    // TODO: this check is currently disabled because Valkey 8.0.0 returns
-    //       redis_version:7.2.4 and the test expects it to be 8.0.0
-    // let res2: Vec<i64> = redis::cmd("test_helper._version_rm_call")
-    //     .query(&mut con)
-    //     .with_context(|| "failed to run test_helper._version_rm_call")?;
-    // assert_eq!(res, res2);
-
-    let res3: String = redis::cmd("test_helper.name")
-        .query(&mut con)
-        .with_context(|| "failed to run test_helper.name")?;
-    assert_eq!(res3, "test_helper.name");
-
-    Ok(())
-}
-
-#[test]
-fn test_command_name() -> Result<()> {
-    use valkey_module::ValkeyValue;
-
-    let port: u16 = 6482;
-    let _guards = vec![start_valkey_server_with_module("test_helper", port)
-        .with_context(|| FAILED_TO_START_SERVER)?];
-    let mut con = get_valkey_connection(port).with_context(|| FAILED_TO_CONNECT_TO_SERVER)?;
-
-    // Call the tested command
-    let res: Result<String, RedisError> = redis::cmd("test_helper.name").query(&mut con);
-
-    // The expected result is according to valkey version
-    let info: String = redis::cmd("info")
-        .arg(&["server"])
-        .query(&mut con)
-        .with_context(|| "failed to run test_helper.name")?;
-
-    if let Ok(ver) = valkey_module::Context::version_from_info(ValkeyValue::SimpleString(info)) {
-        if ver.major > 6
-            || (ver.major == 6 && ver.minor > 2)
-            || (ver.major == 6 && ver.minor == 2 && ver.patch >= 5)
-        {
-            assert_eq!(res.unwrap(), String::from("test_helper.name"));
-        } else {
-            assert!(res
-                .err()
-                .unwrap()
-                .to_string()
-                .contains("RedisModule_GetCurrentCommandName is not available"));
-        }
-    }
-
-    Ok(())
-}
-
-#[test]
-fn test_helper_info() -> Result<()> {
-    const MODULES: [(&str, bool); 4] = [
-        ("test_helper", false),
-        ("info_handler_macro", false),
-        ("info_handler_builder", true),
-        ("info_handler_struct", true),
-    ];
-
-    MODULES
-        .into_iter()
-        .try_for_each(|(module, has_dictionary)| {
-            let port: u16 = 6483;
-            let _guards = vec![start_valkey_server_with_module(module, port)
-                .with_context(|| FAILED_TO_START_SERVER)?];
-            let mut con =
-                get_valkey_connection(port).with_context(|| FAILED_TO_CONNECT_TO_SERVER)?;
-
-            let res: String = redis::cmd("INFO")
-                .arg(module)
-                .query(&mut con)
-                .with_context(|| format!("failed to run INFO {module}"))?;
-
-            assert!(res.contains(&format!("{module}_field:value")));
-            if has_dictionary {
-                assert!(res.contains("dictionary:key=value"));
-            }
-
-            Ok(())
-        })
 }
 
 #[test]
